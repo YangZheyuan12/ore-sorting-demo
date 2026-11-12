@@ -1,0 +1,25 @@
+__pycache__/
+*.py[cod]
+*.pyo
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+.venv/
+venv/
+env/
+
+.idea/
+.vscode/
+*.user
+*.suo
+
+*.log
+*.tmp
+*.bak
+Thumbs.db
+.DS_Store
+
+# 本地串口和设备标定配置不提交，避免把机器相关信息带入仓库。
+local_config.json
+device_calibration.json

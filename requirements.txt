@@ -1,0 +1,3 @@
+# 纯软件仿真只使用 Python 标准库。
+# 连接 Arduino/STM32 串口时安装此可选依赖：
+pyserial>=3.5,<4
