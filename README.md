@@ -104,9 +104,30 @@ ERROR QUEUE_EMPTY
 
 Arduino 固件位于 [firmware/ore_sorter_demo/ore_sorter_demo.ino](firmware/ore_sorter_demo/ore_sorter_demo.ino)。使用 Arduino IDE 打开后即可编译；`Servo` 是 Arduino 内置库。
 
-## 当前数据不足与后续扩展
+## 当前小样本基线与后续扩展
 
-当前阶段不训练一个看似完整但不可验证的深度模型。`sorting_demo/classifier_adapter.py` 只提供固定概率与保守阈值策略：只有废石概率达到 0.72 才执行抛废，否则回到目标矿通道，以降低误抛有用矿石的风险。
+当前数据包含 106 张矿石图和 38 张废石图。按 `实体编号-视角编号.jpg` 解析后，共有 12 块矿石和 12 块废石。训练代码严格按实体分组，禁止同一块矿石的不同视角同时进入训练集和测试集。GUI 默认仍使用固定演示概率，避免把小样本基线结果误称为现场准确率。
+
+建立数据清单：
+
+```powershell
+.\.venv\Scripts\python.exe scripts\prepare_dataset.py
+```
+
+训练第 0 折最小基线。该模型使用 ImageNet 预训练 ResNet50 作为冻结特征骨干，只训练线性分类头；这适合当前只有 24 个独立实体的情况：
+
+```powershell
+.\.venv\Scripts\python.exe scripts\train_resnet50_baseline.py --test-fold 0
+```
+
+导出 ONNX 并执行 PyTorch/ONNX Runtime 数值一致性检查：
+
+```powershell
+.\.venv\Scripts\python.exe scripts\export_onnx.py
+.\.venv\Scripts\python.exe scripts\predict_onnx.py "data\raw\ore\矿石256\1-1.jpg"
+```
+
+数据清单 `data/manifest.csv` 和审计摘要 `data/dataset_summary.json` 可以纳入版本管理；原始图片、训练权重和 ONNX 文件默认被 `.gitignore` 排除。
 
 后续有数据后，保持控制层不动，只新增一个实现如下接口的模型适配器：
 
@@ -117,7 +138,7 @@ def classify(image_path: str) -> tuple[str, float]:
 
 建议按数据量分三步升级：
 
-1. 少量数据：人工规则/传统特征作基线，分层交叉验证；低置信度样本仍走目标矿通道并保存复核。
+1. 少量数据：热强度规则与冻结 ResNet50 特征作基线，按矿石实体进行分组交叉验证；低置信度样本仍走目标矿通道并保存复核。
 2. 数据增加：采用迁移学习，按矿批、采区或采样日期分组划分训练/验证集，避免同批样本泄漏。
 3. 稳定运行：做概率校准、分布外检测和主动学习，优先标注低置信度、模型冲突和新矿源样本。
 
@@ -128,12 +149,19 @@ def classify(image_path: str) -> tuple[str, float]:
 ```text
 矿石分选样机/
 ├─ run_demo.py                         # GUI 入口与命令行自检
+├─ scripts/
+│  ├─ prepare_dataset.py              # 解压、校验和实体分组清单
+│  ├─ evaluate_brightness_baseline.py  # 四折热强度规则对照
+│  ├─ train_resnet50_baseline.py      # 冻结 ResNet50 特征基线
+│  ├─ export_onnx.py                  # ONNX 导出与一致性检查
+│  └─ predict_onnx.py                 # 单图 ONNX Runtime 推理
 ├─ sorting_demo/
 │  ├─ domain.py                       # FIFO、安全保护、计数状态机
 │  ├─ classifier_adapter.py           # 当前演示分类与未来模型接口
 │  ├─ gui.py                          # 机械流程动画、控制台、串口面板
 │  ├─ protocol.py                     # 串口消息生成与解析
-│  └─ transport.py                    # 可选 pyserial 连接
+│  ├─ transport.py                    # 可选 pyserial 连接
+│  └─ ml/                             # 清单、指标和 ONNX 适配器
 ├─ firmware/ore_sorter_demo/
 │  └─ ore_sorter_demo.ino             # Arduino 非阻塞固件
 └─ tests/                              # 状态机与协议测试

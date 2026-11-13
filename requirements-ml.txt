@@ -1,0 +1,11 @@
+# 训练端同时使用 PyPI 和 PyTorch 官方 CPU 软件源。
+--extra-index-url https://download.pytorch.org/whl/cpu
+torch==2.15.0+cpu
+torchvision==0.29.2+cpu
+
+# 导出与部署端
+onnx>=1.20,<2
+onnxruntime>=1.23,<2
+onnxscript>=0.5,<1
+numpy>=2.0,<3
+Pillow>=11,<14

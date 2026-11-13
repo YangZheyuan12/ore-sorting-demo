@@ -23,3 +23,17 @@ Thumbs.db
 # 本地串口和设备标定配置不提交，避免把机器相关信息带入仓库。
 local_config.json
 device_calibration.json
+
+# 原始训练数据、预训练缓存和模型产物不提交到 Git。
+data/raw/
+artifacts/
+.torch/
+.downloads/
+
+# pip/PyTorch 运行时在项目目录中留下的临时工作目录。
+pip-build-tracker-*/
+pip-ephem-wheel-cache-*/
+pip-install-*/
+pip-metadata-*/
+pip-unpack-*/
+torchinductor_*/

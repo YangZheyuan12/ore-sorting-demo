@@ -1,0 +1,31 @@
+{
+  "images": 144,
+  "images_by_label": {
+    "ORE": 106,
+    "WASTE": 38
+  },
+  "specimens": 24,
+  "specimens_by_label": {
+    "ORE": 12,
+    "WASTE": 12
+  },
+  "images_by_fold": {
+    "1": 36,
+    "2": 36,
+    "3": 37,
+    "0": 35
+  },
+  "specimens_by_fold": {
+    "0": 6,
+    "1": 6,
+    "2": 6,
+    "3": 6
+  },
+  "dimensions": {
+    "256x256": 144
+  },
+  "folds": 4,
+  "seed": 42,
+  "ore_archive": "D:\\科研\\采矿赛\\矿石256.rar",
+  "waste_archive": "D:\\科研\\采矿赛\\废石256.rar"
+}
