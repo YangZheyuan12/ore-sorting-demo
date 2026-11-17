@@ -1,6 +1,6 @@
 # 训练端同时使用 PyPI 和 PyTorch 官方 CPU 软件源。
 --extra-index-url https://download.pytorch.org/whl/cpu
-torch==2.15.0+cpu
+torch==2.14.1+cpu
 torchvision==0.29.2+cpu
 
 # 导出与部署端

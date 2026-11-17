@@ -17,6 +17,7 @@ if str(PROJECT_ROOT) not in sys.path:
 
 from sorting_demo.ml.manifest import (  # noqa: E402
     discover_class_images,
+    discover_individual_class_images,
     manifest_summary,
     write_manifest,
 )
@@ -41,10 +42,21 @@ def extract_archive(archive: Path, destination: Path) -> None:
         raise RuntimeError(f"解压失败：{archive}\n{completed.stderr}")
 
 
+def public_path(path: Path) -> str:
+    """Use a project-relative path in reports and avoid leaking workstation paths."""
+    resolved = path.resolve()
+    try:
+        return resolved.relative_to(PROJECT_ROOT.resolve()).as_posix()
+    except ValueError:
+        return path.name
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description="解压矿石/废石数据并建立实体分组清单")
-    parser.add_argument("--ore-archive", type=Path, default=WORKSPACE_ROOT / "矿石256.rar")
-    parser.add_argument("--waste-archive", type=Path, default=WORKSPACE_ROOT / "废石256.rar")
+    parser.add_argument("--ore-archive", type=Path, default=PROJECT_ROOT / "矿石256.rar")
+    parser.add_argument("--waste-archive", type=Path, default=PROJECT_ROOT / "废石256.rar")
+    parser.add_argument("--extra-ore-dir", type=Path, action="append", default=[])
+    parser.add_argument("--extra-waste-dir", type=Path, action="append", default=[])
     parser.add_argument("--data-dir", type=Path, default=PROJECT_ROOT / "data")
     parser.add_argument("--folds", type=int, default=4)
     parser.add_argument("--seed", type=int, default=42)
@@ -61,6 +73,20 @@ def main() -> int:
     extract_archive(args.waste_archive, waste_root)
 
     rows = discover_class_images(ore_root, "ORE") + discover_class_images(waste_root, "WASTE")
+    extra_sources: list[dict[str, str]] = []
+    for label_name, directories in (("ORE", args.extra_ore_dir), ("WASTE", args.extra_waste_dir)):
+        for source_index, directory in enumerate(directories, start=1):
+            if not directory.is_dir():
+                raise NotADirectoryError(directory)
+            prefix = f"extra{source_index}"
+            rows.extend(discover_individual_class_images(directory, label_name, prefix))
+            extra_sources.append(
+                {
+                    "label": label_name,
+                    "path": public_path(directory),
+                    "specimen_prefix": prefix,
+                }
+            )
     manifest_path = args.data_dir / "manifest.csv"
     samples = write_manifest(
         rows,
@@ -74,8 +100,9 @@ def main() -> int:
         {
             "folds": args.folds,
             "seed": args.seed,
-            "ore_archive": str(args.ore_archive.resolve()),
-            "waste_archive": str(args.waste_archive.resolve()),
+            "ore_archive": public_path(args.ore_archive),
+            "waste_archive": public_path(args.waste_archive),
+            "extra_sources": extra_sources,
         }
     )
     summary_path = args.data_dir / "dataset_summary.json"

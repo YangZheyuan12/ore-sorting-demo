@@ -1,31 +1,44 @@
 {
-  "images": 144,
+  "images": 259,
   "images_by_label": {
-    "ORE": 106,
-    "WASTE": 38
+    "ORE": 146,
+    "WASTE": 113
   },
-  "specimens": 24,
+  "specimens": 139,
   "specimens_by_label": {
-    "ORE": 12,
-    "WASTE": 12
+    "ORE": 52,
+    "WASTE": 87
   },
   "images_by_fold": {
-    "1": 36,
-    "2": 36,
-    "3": 37,
-    "0": 35
+    "1": 73,
+    "2": 70,
+    "3": 56,
+    "0": 60
   },
   "specimens_by_fold": {
-    "0": 6,
-    "1": 6,
-    "2": 6,
-    "3": 6
+    "0": 35,
+    "1": 35,
+    "2": 35,
+    "3": 34
   },
   "dimensions": {
-    "256x256": 144
+    "256x256": 144,
+    "240x320": 115
   },
   "folds": 4,
   "seed": 42,
-  "ore_archive": "D:\\科研\\采矿赛\\矿石256.rar",
-  "waste_archive": "D:\\科研\\采矿赛\\废石256.rar"
+  "ore_archive": "矿石256.rar",
+  "waste_archive": "废石256.rar",
+  "extra_sources": [
+    {
+      "label": "ORE",
+      "path": "模拟待测样本/矿石",
+      "specimen_prefix": "extra1"
+    },
+    {
+      "label": "WASTE",
+      "path": "模拟待测样本/废石",
+      "specimen_prefix": "extra1"
+    }
+  ]
 }

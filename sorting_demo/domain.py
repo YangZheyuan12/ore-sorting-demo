@@ -123,7 +123,7 @@ class SortingMachine:
         self.entry_gate.reset()
         self.exit_gate.reset()
         self.state = MachineState.READY
-        self._emit("BATCH", f"已装载 {self.expected_batch} 条演示分类结果", count=self.expected_batch)
+        self._emit("BATCH", f"已装载 {self.expected_batch} 条图片分类结果", count=self.expected_batch)
 
     def append_item(self, item: SortItem) -> None:
         if self.state not in {MachineState.IDLE, MachineState.READY}:

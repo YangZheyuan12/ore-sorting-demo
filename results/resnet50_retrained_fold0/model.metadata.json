@@ -1,0 +1,18 @@
+{
+  "model": "resnet50",
+  "input_name": "image",
+  "input_shape": [1, 3, 224, 224],
+  "output_name": "waste_logit",
+  "output_semantics": "sigmoid(waste_logit) = p_waste",
+  "mean": [0.485, 0.456, 0.406],
+  "std": [0.229, 0.224, 0.225],
+  "waste_threshold": 0.4897416243329644,
+  "threshold_unit": "image",
+  "labels": {"ORE": 0, "WASTE": 1},
+  "test_fold": 0,
+  "pretrained_backbone": true,
+  "onnx_opset": 18,
+  "onnxruntime_providers_tested": ["CPUExecutionProvider"],
+  "pytorch_onnx_max_absolute_error": 1.430511474609375e-06,
+  "external_data_files": ["model_retrained.onnx.data"]
+}

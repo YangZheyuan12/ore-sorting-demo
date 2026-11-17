@@ -1,0 +1,37 @@
+{
+  "model": "ResNet50 ImageNet frozen feature extractor + linear waste head",
+  "dataset": {
+    "images": 259,
+    "specimens": 139,
+    "train": {"images": 170, "specimens": 84},
+    "validation": {"images": 29, "specimens": 20},
+    "test": {"images": 60, "specimens": 35}
+  },
+  "training": {
+    "best_epoch": 400,
+    "epochs_run": 400,
+    "best_validation_loss": 0.004162565339356661
+  },
+  "decision": {
+    "output": "sigmoid(waste_logit) = p_waste",
+    "waste_threshold": 0.4897416243329644,
+    "threshold_unit": "image"
+  },
+  "test_image_metrics": {
+    "accuracy": 0.9666666666666667,
+    "balanced_accuracy": 0.96,
+    "waste_precision": 1.0,
+    "waste_recall": 0.92,
+    "ore_recall": 1.0,
+    "ore_misdiscard_rate": 0.0,
+    "f1_waste": 0.9583333333333334
+  },
+  "test_specimen_metrics": {
+    "accuracy": 1.0,
+    "balanced_accuracy": 1.0,
+    "waste_recall": 1.0,
+    "ore_recall": 1.0,
+    "ore_misdiscard_rate": 0.0
+  },
+  "warning": "小样本研究原型；时间戳图片按每图一个实体处理，如果存在同一样品多视角，指标可能乐观。本结果不可代替现场标定与独立测试。"
+}

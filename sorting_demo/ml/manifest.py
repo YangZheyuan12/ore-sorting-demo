@@ -72,6 +72,53 @@ def discover_class_images(class_root: Path, label_name: str) -> list[dict[str, o
     return records
 
 
+def discover_individual_class_images(
+    class_root: Path,
+    label_name: str,
+    specimen_prefix: str,
+) -> list[dict[str, object]]:
+    """Discover one-view samples whose filenames do not encode specimen/view IDs.
+
+    Each image is treated as a separate physical specimen.  This is appropriate for
+    capture batches containing one labelled object per image and avoids making
+    assumptions from camera-generated timestamp filenames.
+    """
+    label_name = label_name.upper()
+    if label_name not in LABELS:
+        raise ValueError(f"未知类别：{label_name}")
+    if not specimen_prefix or not re.fullmatch(r"[A-Za-z0-9_-]+", specimen_prefix):
+        raise ValueError("specimen_prefix 只能包含字母、数字、下划线和连字符")
+
+    paths = sorted(
+        path for path in class_root.rglob("*")
+        if path.is_file() and path.suffix.lower() in IMAGE_SUFFIXES
+    )
+    if not paths:
+        raise ValueError(f"没有在 {class_root} 中发现图片")
+
+    records: list[dict[str, object]] = []
+    for index, path in enumerate(paths, start=1):
+        with Image.open(path) as image:
+            image.verify()
+        with Image.open(path) as image:
+            width, height = image.size
+            if image.mode != "RGB":
+                raise ValueError(f"当前基线要求 RGB 图片，实际为 {image.mode}：{path}")
+        records.append(
+            {
+                "absolute_path": path,
+                "label": LABELS[label_name],
+                "label_name": label_name,
+                "specimen_id": f"{label_name.lower()}_{specimen_prefix}_{index:04d}",
+                "view_id": "1",
+                "width": width,
+                "height": height,
+                "sha256": file_sha256(path),
+            }
+        )
+    return records
+
+
 def assign_group_folds(
     records: Iterable[dict[str, object]],
     n_folds: int = 4,

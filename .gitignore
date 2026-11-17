@@ -26,9 +26,15 @@ device_calibration.json
 
 # 原始训练数据、预训练缓存和模型产物不提交到 Git。
 data/raw/
+data/feedback/
+data/app_cache/
 artifacts/
 .torch/
 .downloads/
+/*.rar
+/废石256/
+/矿石256/
+/模拟待测样本/
 
 # pip/PyTorch 运行时在项目目录中留下的临时工作目录。
 pip-build-tracker-*/
@@ -37,3 +43,9 @@ pip-install-*/
 pip-metadata-*/
 pip-unpack-*/
 torchinductor_*/
+
+# Windows App 打包产物。
+build/
+dist/
+.release/
+*.spec

@@ -1,0 +1,6 @@
+# 微波智选桌面 App 运行与打包依赖（不包含训练端 PyTorch）。
+numpy>=2.0,<3
+onnxruntime>=1.23,<2
+Pillow>=11,<14
+pyserial>=3.5,<4
+pyinstaller>=6.0,<7

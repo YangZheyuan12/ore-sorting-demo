@@ -6,7 +6,11 @@ from pathlib import Path
 
 from PIL import Image
 
-from sorting_demo.ml.manifest import discover_class_images, write_manifest
+from sorting_demo.ml.manifest import (
+    discover_class_images,
+    discover_individual_class_images,
+    write_manifest,
+)
 from sorting_demo.ml.metrics import aggregate_by_specimen, binary_metrics, choose_risk_threshold
 
 
@@ -33,6 +37,21 @@ class ManifestTests(unittest.TestCase):
             self.assertEqual({sample.specimen_id for sample in samples if sample.label == 0}, {
                 "ore_001", "ore_002", "ore_003", "ore_004"
             })
+
+    def test_timestamp_named_images_are_individual_specimens(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            ore = root / "phone" / "ore"
+            ore.mkdir(parents=True)
+            for index in range(4):
+                Image.new("RGB", (16, 24), (index * 30, 20, 10)).save(
+                    ore / f"IMG2026111719000{index}.jpeg"
+                )
+            records = discover_individual_class_images(ore, "ORE", "phone")
+            samples = write_manifest(records, root, root / "manifest.csv", n_folds=2, seed=7)
+            self.assertEqual(len({sample.specimen_id for sample in samples}), 4)
+            self.assertEqual({sample.view_id for sample in samples}, {"1"})
+            self.assertEqual({(sample.width, sample.height) for sample in samples}, {(16, 24)})
 
 
 class MetricsTests(unittest.TestCase):

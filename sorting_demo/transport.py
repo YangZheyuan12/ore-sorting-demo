@@ -2,6 +2,8 @@ from __future__ import annotations
 
 from typing import Any
 
+from .protocol import HARDWARE_BAUDRATE
+
 
 try:
     import serial  # type: ignore[import-not-found]
@@ -29,11 +31,11 @@ class SerialTransport:
             return []
         return [port.device for port in list_ports.comports()]
 
-    def connect(self, port_name: str, baudrate: int = 115200) -> None:
+    def connect(self, port_name: str, baudrate: int = HARDWARE_BAUDRATE) -> None:
         if serial is None:
             raise RuntimeError("未安装 pyserial；纯软件演示不受影响")
         self.close()
-        self._port = serial.Serial(port_name, baudrate=baudrate, timeout=0)
+        self._port = serial.Serial(port_name, baudrate=baudrate, timeout=0, write_timeout=1)
 
     def close(self) -> None:
         if self._port is not None:
@@ -45,6 +47,7 @@ class SerialTransport:
         if not self.connected:
             raise RuntimeError("串口未连接")
         self._port.write((line.strip() + "\n").encode("ascii"))
+        self._port.flush()
 
     def poll(self) -> list[str]:
         if not self.connected:

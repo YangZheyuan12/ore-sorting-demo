@@ -344,6 +344,7 @@ def main() -> int:
     parser.add_argument("--head-lr", type=float, default=1e-2)
     parser.add_argument("--weight-decay", type=float, default=1e-3)
     parser.add_argument("--patience", type=int, default=60)
+    parser.add_argument("--validation-specimens-per-class", type=int, default=2)
     parser.add_argument("--max-ore-misdiscard-rate", type=float, default=0.0)
     parser.add_argument(
         "--threshold-unit",
@@ -353,6 +354,12 @@ def main() -> int:
     )
     parser.add_argument("--output-dir", type=Path, default=PROJECT_ROOT / "artifacts" / "resnet50_baseline_fold0")
     parser.add_argument("--random-backbone", action="store_true", help="仅用于离线冒烟测试，不下载 ImageNet 权重")
+    parser.add_argument(
+        "--backbone-checkpoint",
+        type=Path,
+        default=None,
+        help="从已有本项目 model.pt 复用 ResNet50 骨干参数，适合离线重训",
+    )
     args = parser.parse_args()
 
     set_seed(args.seed)
@@ -360,7 +367,12 @@ def main() -> int:
     folds = sorted({sample.fold for sample in samples})
     if args.test_fold not in folds:
         raise ValueError(f"test-fold 必须属于 {folds}")
-    splits = split_by_specimen(samples, args.test_fold, args.seed)
+    splits = split_by_specimen(
+        samples,
+        args.test_fold,
+        args.seed,
+        validation_specimens_per_class=args.validation_specimens_per_class,
+    )
     args.output_dir.mkdir(parents=True, exist_ok=True)
     write_split_csv(args.output_dir / "split.csv", splits)
 
@@ -374,10 +386,19 @@ def main() -> int:
     }
     print(json.dumps(split_summary, ensure_ascii=False, indent=2))
 
-    weights = None if args.random_backbone else models.ResNet50_Weights.DEFAULT
-    print(f"加载 ResNet50 骨干：{'随机权重' if weights is None else 'ImageNet 预训练权重'}")
-    backbone = models.resnet50(weights=weights)
-    feature_dimension = backbone.fc.in_features
+    if args.backbone_checkpoint is not None:
+        checkpoint = torch.load(args.backbone_checkpoint, map_location="cpu", weights_only=True)
+        backbone = models.resnet50(weights=None)
+        feature_dimension = backbone.fc.in_features
+        backbone.fc = nn.Linear(feature_dimension, 1)
+        backbone.load_state_dict(checkpoint["state_dict"])
+        backbone_source = f"已有检查点：{args.backbone_checkpoint}"
+    else:
+        weights = None if args.random_backbone else models.ResNet50_Weights.DEFAULT
+        backbone = models.resnet50(weights=weights)
+        feature_dimension = backbone.fc.in_features
+        backbone_source = "随机权重" if weights is None else "ImageNet 预训练权重"
+    print(f"加载 ResNet50 骨干：{backbone_source}")
     backbone.fc = nn.Identity()
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     backbone.to(device).eval()
@@ -459,6 +480,7 @@ def main() -> int:
             "test_fold": args.test_fold,
             "seed": args.seed,
             "pretrained_backbone": not args.random_backbone,
+            "backbone_source": backbone_source,
         },
         checkpoint_path,
     )
@@ -475,15 +497,22 @@ def main() -> int:
         writer.writeheader()
         writer.writerows(validation_rows)
 
+    total_specimens = sum(int(section["specimens"]) for section in split_summary.values())
+    try:
+        public_checkpoint = checkpoint_path.resolve().relative_to(PROJECT_ROOT.resolve()).as_posix()
+    except ValueError:
+        public_checkpoint = checkpoint_path.name
     report = {
         "model": "ResNet50 ImageNet frozen feature extractor + linear waste head",
-        "prototype_warning": "仅有 24 个独立实体，本结果只用于技术链路验证。",
+        "prototype_warning": f"小样本研究原型（{total_specimens} 个独立实体），不可代替现场标定与独立验证。",
         "device": str(device),
+        "backbone_source": backbone_source,
         "split": split_summary,
         "training": training_info,
+        "validation_specimens_per_class": args.validation_specimens_per_class,
         "resnet50": model_evaluation,
         "brightness_baseline": brightness_evaluation,
-        "checkpoint": str(checkpoint_path.resolve()),
+        "checkpoint": public_checkpoint,
     }
     report_path = args.output_dir / "report.json"
     report_path.write_text(json.dumps(report, ensure_ascii=False, indent=2), encoding="utf-8")
